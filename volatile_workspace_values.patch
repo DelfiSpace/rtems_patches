@@ -1,5 +1,5 @@
 diff --git a/cpukit/include/rtems/score/wkspaceinitone.h b/cpukit/include/rtems/score/wkspaceinitone.h
-index 0dc252a..cf0034b 100644
+index 0dc252a..48d19a9 100644
 --- a/cpukit/include/rtems/score/wkspaceinitone.h
 +++ b/cpukit/include/rtems/score/wkspaceinitone.h
 @@ -37,12 +37,12 @@
@@ -17,7 +17,7 @@ index 0dc252a..cf0034b 100644
  
  #ifdef __cplusplus
  extern "C" {
-@@ -57,46 +57,39 @@ extern "C" {
+@@ -57,46 +57,43 @@ extern "C" {
   * This implementation should be used by BSPs which provide exactly one memory
   * area via _Memory_Get() to implement _Workspace_Handler_initialization().
   */
@@ -26,6 +26,7 @@ index 0dc252a..cf0034b 100644
 -  uintptr_t                 page_size;
 -  uintptr_t                 wkspace_size;
 -  uintptr_t                 wkspace_size_with_overhead;
++#include <rtems/score/tls.h>
 +static inline void _Workspace_Initialize_for_one_area(void) {
 +  volatile uintptr_t page_size;
 +  volatile uintptr_t wkspace_size;
@@ -38,6 +39,9 @@ index 0dc252a..cf0034b 100644
 +  volatile uintptr_t free_size;
 +  volatile uintptr_t available_size;
 +  volatile uintptr_t size;
++
++  volatile uintptr_t test_tls_get_allocation_size;
++  test_tls_get_allocation_size = _TLS_Get_allocation_size();
  
    page_size = CPU_HEAP_ALIGNMENT;
    wkspace_size = rtems_configuration_get_work_space_size();
@@ -81,7 +85,7 @@ index 0dc252a..cf0034b 100644
    } else {
      /*
       * An unsigned integer overflow happened, or the available free memory is
-@@ -105,11 +98,11 @@ static inline void _Workspace_Initialize_for_one_area( void )
+@@ -105,11 +102,11 @@ static inline void _Workspace_Initialize_for_one_area( void )
      available_size = 0;
    }
  
