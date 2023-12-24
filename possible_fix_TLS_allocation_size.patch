@@ -1,0 +1,121 @@
+diff --git a/cpukit/score/src/tlsallocsize.c b/cpukit/score/src/tlsallocsize.c
+index fa28391..e484b0e 100644
+--- a/cpukit/score/src/tlsallocsize.c
++++ b/cpukit/score/src/tlsallocsize.c
+@@ -38,9 +38,9 @@
+ #include "config.h"
+ #endif
+ 
+-#include <rtems/score/tls.h>
+ #include <rtems/score/interr.h>
+ #include <rtems/score/thread.h>
++#include <rtems/score/tls.h>
+ 
+ extern char _TLS_Data_begin[];
+ 
+@@ -65,32 +65,33 @@ extern char _TLS_Size[];
+ extern char _TLS_Alignment[];
+ 
+ const volatile TLS_Configuration _TLS_Configuration = {
+-  .data_begin = _TLS_Data_begin,
+-  .data_size = _TLS_Data_size,
+-  .bss_begin = _TLS_BSS_begin,
+-  .bss_size = _TLS_BSS_size,
+-  .size = _TLS_Size,
+-  .alignment = _TLS_Alignment
+-};
++    .data_begin = _TLS_Data_begin,
++    .data_size = _TLS_Data_size,
++    .bss_begin = _TLS_BSS_begin,
++    .bss_size = _TLS_BSS_size,
++    .size = _TLS_Size,
++    .alignment = _TLS_Alignment};
+ 
+ static uintptr_t _TLS_Allocation_size;
+ 
+-uintptr_t _TLS_Get_allocation_size( void )
+-{
++uintptr_t _TLS_Get_allocation_size(void) {
+   const volatile TLS_Configuration *config;
+-  uintptr_t                         size;
+-  uintptr_t                         allocation_size;
++  uintptr_t size;
++  uintptr_t allocation_size;
+ 
+   config = &_TLS_Configuration;
+-  size = (uintptr_t) config->size;
++  size = (uintptr_t)config->size;
+ 
+-  if ( size == 0 ) {
++  if (size == 0) {
+     return 0;
+   }
+ 
++  /* patched out
+   allocation_size = _TLS_Allocation_size;
++  */
++  allocation_size = 0;
+ 
+-  if ( allocation_size == 0 ) {
++  if (allocation_size == 0) {
+     uintptr_t tls_align;
+     uintptr_t stack_align;
+ 
+@@ -99,45 +100,45 @@ uintptr_t _TLS_Get_allocation_size( void )
+      * shall meet the stack alignment requirement.
+      */
+     stack_align = CPU_STACK_ALIGNMENT;
+-    tls_align = RTEMS_ALIGN_UP( (uintptr_t) config->alignment, stack_align );
++    tls_align = RTEMS_ALIGN_UP((uintptr_t)config->alignment, stack_align);
+ 
+ #ifndef __i386__
+     /* Reserve space for the dynamic thread vector */
+     allocation_size +=
+-      RTEMS_ALIGN_UP( sizeof( TLS_Dynamic_thread_vector ), stack_align );
++        RTEMS_ALIGN_UP(sizeof(TLS_Dynamic_thread_vector), stack_align);
+ #endif
+ 
+     /* Reserve space for the thread control block */
+     allocation_size +=
+ #if CPU_THREAD_LOCAL_STORAGE_VARIANT == 11
+-      RTEMS_ALIGN_UP( sizeof( TLS_Thread_control_block ), tls_align );
++        RTEMS_ALIGN_UP(sizeof(TLS_Thread_control_block), tls_align);
+ #else
+-      RTEMS_ALIGN_UP( sizeof( TLS_Thread_control_block ), stack_align );
++        RTEMS_ALIGN_UP(sizeof(TLS_Thread_control_block), stack_align);
+ #endif
+ 
+     /* Reserve space for the thread-local storage data */
+     allocation_size +=
+ #if CPU_THREAD_LOCAL_STORAGE_VARIANT == 20
+-      RTEMS_ALIGN_UP( size, tls_align );
++        RTEMS_ALIGN_UP(size, tls_align);
+ #else
+-      RTEMS_ALIGN_UP( size, stack_align );
++        RTEMS_ALIGN_UP(size, stack_align);
+ #endif
+ 
+     /*
+      * The stack allocator does not support aligned allocations.  Allocate
+      * enough to do the alignment manually.
+      */
+-    if ( tls_align > stack_align ) {
+-      _Assert( tls_align % stack_align == 0 );
++    if (tls_align > stack_align) {
++      _Assert(tls_align % stack_align == 0);
+       allocation_size += tls_align - stack_align;
+     }
+ 
+-    if ( _Thread_Maximum_TLS_size != 0 ) {
+-      if ( allocation_size <= _Thread_Maximum_TLS_size ) {
+-        _Assert( _Thread_Maximum_TLS_size % CPU_STACK_ALIGNMENT == 0 );
++    if (_Thread_Maximum_TLS_size != 0) {
++      if (allocation_size <= _Thread_Maximum_TLS_size) {
++        _Assert(_Thread_Maximum_TLS_size % CPU_STACK_ALIGNMENT == 0);
+         allocation_size = _Thread_Maximum_TLS_size;
+       } else {
+-        _Internal_error( INTERNAL_ERROR_TOO_LARGE_TLS_SIZE );
++        _Internal_error(INTERNAL_ERROR_TOO_LARGE_TLS_SIZE);
+       }
+     }
+ 
